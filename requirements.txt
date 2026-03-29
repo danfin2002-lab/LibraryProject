@@ -1,0 +1,10 @@
+alembic
+asyncpg
+psycopg
+psycopg2-binary
+sqlalchemy
+
+fastapi
+pydantic
+pydantic-settings
+uvicorn

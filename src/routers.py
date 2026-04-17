@@ -78,7 +78,7 @@ async def delete_author(author_id: int, session: SessionDep):
 @router.post("/books", tags = ["Книги"], summary =  "Добавить книгу")
 async def add_book(data: BookAddSchema, session: SessionDep):
 	author_obj = await session.scalar(
-		select(Author).where(Author.name == data.author_name)
+		select(Author).where(Author.id == data.author_id)
 	)
 	if author_obj is None:
 		raise HTTPException(
@@ -87,19 +87,19 @@ async def add_book(data: BookAddSchema, session: SessionDep):
 		)
 	#Добавить проверку, есть ли уже такая книга
 	existing_book = await session.scalar(select(Book).where(Book.title == data.title, Book.genre == data.genre, Book.author_id == author_obj.id))
-	if existing_book is None:
-		book_obj = Book(
-			title = data.title,
-			genre = data.genre,
-			author_id = author_obj.id
+	if existing_book is not None:
+		raise HTTPException(
+		status_code=400,
+		detail="Такая книга уже существует"
 		)
-		session.add(book_obj)
-		await session.commit()
-		return {"ok": "Книга добавлена"}
-	raise HTTPException(
-	status_code=400,
-	detail="Такая книга уже существует"
+	book_obj = Book(
+		title = data.title,
+		genre = data.genre,
+		author_id = author_obj.id
 	)
+	session.add(book_obj)
+	await session.commit()
+	return {"ok": "Книга добавлена"}
 
 @router.get("/books/{book_title}", tags=["Книги"], summary="Получить книгу по названию")
 async def get_book_by_title(book_title: str, session:SessionDep)->BookSelectSchema:

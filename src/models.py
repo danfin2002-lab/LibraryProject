@@ -14,8 +14,8 @@ class Base(DeclarativeBase):
 class Author(Base):
     __tablename__ = "authors"
 
-    id: Mapped[intpk] = mapped_column(unique=True)
-    name: Mapped[strname]
+    id: Mapped[intpk]
+    name: Mapped[strname] = mapped_column(unique=True)
 
 class Book(Base):
     __tablename__ = "books"

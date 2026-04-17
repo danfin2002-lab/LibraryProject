@@ -1,15 +1,13 @@
-#import asyncio
-
 import uvicorn
-
-
-from src.routers import router
+# from src.routing import routers
 from fastapi import FastAPI
+from src.routing import routers
+
 
 app = FastAPI()
 
-app.include_router(router)
-
+for router in routers:
+	app.include_router(router)
 
 if __name__ == "__main__":
 	uvicorn.run("main:app", reload=True, host="0.0.0.0", port=8000)#reload важен для скорости разработки: сохранили файл - сразу увидели изменения

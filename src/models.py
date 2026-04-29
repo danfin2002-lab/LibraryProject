@@ -1,8 +1,10 @@
 import datetime
-
-from sqlalchemy import String, ForeignKey, CheckConstraint
+import uuid
+from sqlalchemy import String, ForeignKey, CheckConstraint, UUID
 from typing import Annotated
 from sqlalchemy.orm import Mapped, mapped_column, DeclarativeBase
+from fastapi_users.db import SQLAlchemyBaseUserTableUUID, SQLAlchemyUserDatabase
+
 
 intpk = Annotated[int, mapped_column(primary_key=True)]
 strname = Annotated[str, mapped_column(String(30))]
@@ -38,6 +40,7 @@ class Visitor(Base):
     name: Mapped[strname]
     birthday: Mapped[datetime.date]
 
+
 class Arrear(Base):
     __tablename__ = "arrears"
 
@@ -57,4 +60,11 @@ class BL(Base):
     library_id: Mapped[int] = mapped_column(ForeignKey("libraries.id", ondelete="CASCADE"))
     count: Mapped[int]
 
+class User(SQLAlchemyBaseUserTableUUID, Base):
+    __tablename__ = "users"
 
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid.uuid4
+    )

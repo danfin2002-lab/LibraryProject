@@ -1,17 +1,24 @@
-from src.dependencies.repo_serv import VisitorServiceDep
-from fastapi import APIRouter, HTTPException
+from src.dependencies.visitors import VisitorServiceDep
+from fastapi import APIRouter, HTTPException, Response, Depends
 from src.schemas import VisitorAddSchema, VisitorSelectSchema
 from src.exceptions import VisitorExistsException, VisitorNotFoundException
+from src.dependencies.active_user import current_active_user
+from fastapi.security import HTTPBearer
 
-router = APIRouter(prefix="/visitors", tags=["Посетители"])
+http_bearer = HTTPBearer(auto_error=False)
+router = APIRouter(prefix="/visitors", tags=["Посетители"], dependencies=[Depends(current_active_user), Depends(http_bearer)])
 
-@router.post("",
+@router.post(
+	"",
     responses={400:{"descriptions":"Такой посетитель уже существует"},
 			 500:{"descriptions":"Не удалось добавить посетителя"}},
-    summary="Добавить посетителя")
-async def add_visitor(data: VisitorAddSchema, visitor_service: VisitorServiceDep):
+    summary="Добавить посетителя",
+	response_model=VisitorSelectSchema
+)
+async def add_visitor(data: VisitorAddSchema, visitor_service: VisitorServiceDep)->VisitorSelectSchema:
 	try:
-		return await visitor_service.add_visitor(data)
+		visitor_obj = await visitor_service.add_visitor(data)
+		return visitor_obj
 	except VisitorExistsException:
 		raise HTTPException(status_code=400, detail="Такой посетитель уже существует")
 	except Exception:
@@ -54,12 +61,14 @@ async def update_visitor(id: int, data: VisitorAddSchema, visitor_service: Visit
 		raise HTTPException(status_code=500, detail="Не удалось обновить посетителя")
 		
 @router.delete("/id",
+	status_code=204,
 	responses={404:{"descriptions":"Такой посетитель не найден"},
 			   500:{"descriptions":"Не удалось удалить посетителя"}},
 	summary="Удалить посетителя")
 async def delete(id: int, visitor_service: VisitorServiceDep):
 	try:
-		return await visitor_service.delete_visitor(id)
+		await visitor_service.delete_visitor(id)
+		return Response(status_code=204)
 	except VisitorNotFoundException:
 		raise HTTPException(status_code=404, detail="Такой посетитель не найден")
 	except Exception:

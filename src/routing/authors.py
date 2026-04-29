@@ -1,17 +1,26 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Response, Depends
 from src.schemas import AuthorAddSchema, AuthorSelectSchema
-from src.dependencies.repo_serv import AuthorServiceDep
+from src.dependencies.authors import AuthorServiceDep
 from src.exceptions import AuthorExistsException, AuthorNotFoundException
-router = APIRouter(prefix="/authors", tags=["Авторы"])
+from src.dependencies.active_user import current_active_user
+from fastapi.security import HTTPBearer
+
+http_bearer = HTTPBearer(auto_error=False)
+
+router = APIRouter(prefix="/authors", tags=["Авторы"], dependencies=[Depends(current_active_user), Depends(http_bearer)])
 
 #Ручка создания автора
-@router.post("",
-    responses={400:{"descriptions":"Такой автор уже существует"},
-			 500:{"descriptions":"Не удалось добавить автора"}},
-    summary="Добавить автора")
-async def add_author(data: AuthorAddSchema, author_service: AuthorServiceDep):
+@router.post(
+		"",
+		responses={400:{"descriptions":"Такой автор уже существует"},
+				 500:{"descriptions":"Не удалось добавить автора"}},
+		summary="Добавить автора",
+		response_model=AuthorSelectSchema
+	)
+async def add_author(data: AuthorAddSchema, author_service: AuthorServiceDep)->AuthorSelectSchema:
 	try:
-		return await author_service.add_author(data)
+		author_obj = await author_service.add_author(data)
+		return author_obj
 	except AuthorExistsException:
 		raise HTTPException(status_code=400, detail="Такой автор уже существует")
 	except Exception:
@@ -63,12 +72,14 @@ async def update_author(id: int, data: AuthorAddSchema, author_service: AuthorSe
 
 @router.delete(
 	"/id",
+	status_code=204,
 	responses={404:{"descriptions":"Такой автор не найден"},
 			   500:{"descriptions":"Не удалось удалить автора"}},
 	summary="Удалить автора")
 async def delete_author(id: int, author_service: AuthorServiceDep):
 	try:
-		return await author_service.delete_author(id)
+		await author_service.delete_author(id)
+		return Response(status_code=204)
 	except AuthorNotFoundException:
 		raise HTTPException(status_code=404, detail="Такой автор не найден")
 	except Exception:

@@ -1,9 +1,12 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Response, Depends
 from src.schemas import LibraryAddSchema, LibrarySelectSchema
-from src.dependencies.repo_serv import LibraryServiceDep
+from src.dependencies.libraries import LibraryServiceDep
 from src.exceptions import LibraryExistsException, LibraryNotFoundException
+from src.dependencies.active_user import current_active_user
+from fastapi.security import HTTPBearer
 
-router = APIRouter(prefix="/libraries", tags=["Библиотеки"])
+http_bearer = HTTPBearer(auto_error=False)
+router = APIRouter(prefix="/libraries", tags=["Библиотеки"], dependencies=[Depends(current_active_user), Depends(http_bearer)])
 
 
 # Ручка создания библиотеки
@@ -11,11 +14,13 @@ router = APIRouter(prefix="/libraries", tags=["Библиотеки"])
     "",
     responses={400: {"description": "Такая библиотека уже существует"},
                500: {"description": "Не удалось добавить библиотеку"}},
-    summary="Добавить библиотеку"
+    summary="Добавить библиотеку",
+    response_model=LibrarySelectSchema
 )
-async def add_library(data: LibraryAddSchema, library_service: LibraryServiceDep):
+async def add_library(data: LibraryAddSchema, library_service: LibraryServiceDep)->LibrarySelectSchema:
     try:
-        return await library_service.add_library(data)
+        library_obj = await library_service.add_library(data)
+        return library_obj
     except LibraryExistsException:
         raise HTTPException(status_code=400, detail="Такая библиотека уже существует")
     except Exception:
@@ -73,13 +78,15 @@ async def update_library(id: int, data: LibraryAddSchema, library_service: Libra
 # Ручка удаления библиотеки
 @router.delete(
     "/{id}",
+    status_code=204,
     responses={404: {"description": "Такая библиотека не найдена"},
                500: {"description": "Не удалось удалить библиотеку"}},
     summary="Удалить библиотеку"
 )
 async def delete_library(id: int, library_service: LibraryServiceDep):
     try:
-        return await library_service.delete_library(id)
+        await library_service.delete_library(id)
+        return Response(status_code=204)
     except LibraryNotFoundException:
         raise HTTPException(status_code=404, detail="Такая библиотека не найдена")
     except Exception:

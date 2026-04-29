@@ -1,10 +1,13 @@
-
 #400
 class BookExistsException(Exception):
 	pass
 #404
 class BookNotFoundException(Exception):
 	pass
+#409
+class BookNotEnoughException(Exception):
+	pass
+
 
 #400
 class AuthorExistsException(Exception):
@@ -13,24 +16,27 @@ class AuthorExistsException(Exception):
 class AuthorNotFoundException(Exception):
 	pass
 
+
 #400
 class LibraryExistsException(Exception):
 	pass
 #404
 class LibraryNotFoundException(Exception):
 	pass
-		
+
 #400
 class VisitorExistsException(Exception):
 	pass
 #404
 class VisitorNotFoundException(Exception):
 	pass
-		
+
+
 #404
 class BLNotFoundException(Exception):
 	pass
-	
+
+
 #404
 class ArrearNotFoundException(Exception):
 	pass

@@ -3,8 +3,9 @@ asyncpg
 psycopg
 psycopg2-binary
 sqlalchemy
-
 fastapi
 pydantic
 pydantic-settings
 uvicorn
+fastapi-users[sqlalchemy]
+fastapi-users-db-sqlalchemy
